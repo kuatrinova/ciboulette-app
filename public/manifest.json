@@ -1,0 +1,24 @@
+{
+  "name": "Ciboulette Catering - Disponibilidad",
+  "short_name": "Ciboulette",
+  "description": "Confirma tu disponibilidad para eventos de Ciboulette Catering",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFAF8",
+  "theme_color": "#6B7B3A",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
