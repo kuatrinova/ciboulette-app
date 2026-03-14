@@ -23,6 +23,7 @@ interface Evento {
 interface Camarero {
   id: number;
   nombre_o_telefono: string;
+  estado?: string;
 }
 
 const DIAS_LABEL: Record<string, string> = {
@@ -260,8 +261,18 @@ export default function Asignacion() {
                       key={cam.id}
                       className="flex items-center justify-between bg-[#E8EBD8] rounded-lg px-3 py-2"
                     >
-                      <span className="text-sm text-[#333]">
+                      <span className="text-sm text-[#333] flex items-center gap-2">
                         {cam.nombre_o_telefono}
+                        {cam.estado === "aceptado" && (
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-600 text-white text-[10px] font-bold">
+                            A
+                          </span>
+                        )}
+                        {cam.estado === "rechazado" && (
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-400 text-white text-[10px] font-bold">
+                            R
+                          </span>
+                        )}
                       </span>
                       <button
                         onClick={() => desasignar(cam.id)}

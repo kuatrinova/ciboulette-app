@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import NotificacionBanner from "@/components/NotificacionBanner";
 
 export default function Home() {
   return (
@@ -18,7 +19,11 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="animate-fade-in-up animate-delay-200 mt-12 w-full flex flex-col gap-3">
+        <div className="animate-fade-in-up animate-delay-150 mt-6 w-full">
+          <NotificacionBanner />
+        </div>
+
+        <div className="animate-fade-in-up animate-delay-200 mt-6 w-full flex flex-col gap-3">
           <Link
             href="/formulario"
             className="block w-full py-4 bg-[#6B7B3A] text-white text-center rounded-2xl text-base font-medium

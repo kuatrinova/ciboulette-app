@@ -5,9 +5,11 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 interface Asignacion {
+  asignacion_id: number;
   dia: string;
   turno: string;
   finca: string;
+  estado: string;
 }
 
 export default function Consulta() {
@@ -54,6 +56,31 @@ export default function Consulta() {
       setError("Error de conexión. Intenta de nuevo.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const responder = async (asignacionId: number, estado: "aceptado" | "rechazado") => {
+    try {
+      const res = await fetch("/api/consulta/responder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          asignacion_id: asignacionId,
+          estado,
+          nombre_o_telefono: nombre.trim(),
+        }),
+      });
+      if (res.ok) {
+        setAsignaciones((prev) =>
+          prev.map((a) =>
+            a.asignacion_id === asignacionId ? { ...a, estado } : a
+          )
+        );
+      } else {
+        setError("Error al responder");
+      }
+    } catch {
+      setError("Error de conexión");
     }
   };
 
@@ -138,26 +165,75 @@ export default function Consulta() {
                   {asignaciones.length === 1 ? "asignación" : "asignaciones"}
                 </p>
 
-                {asignaciones.map((a, i) => (
+                {asignaciones.map((a) => (
                   <div
-                    key={i}
-                    className="rounded-2xl overflow-hidden shadow-lg shadow-[#6B7B3A]/15"
+                    key={a.asignacion_id}
+                    className={`rounded-2xl overflow-hidden shadow-lg ${
+                      a.estado === "aceptado"
+                        ? "shadow-green-500/15"
+                        : a.estado === "rechazado"
+                        ? "shadow-red-400/15"
+                        : "shadow-[#6B7B3A]/15"
+                    }`}
                   >
-                    <div className="bg-[#6B7B3A] px-5 py-3">
-                      <h3 className="text-lg font-bold tracking-wide text-white">
-                        {diaLabel(a.dia)}
-                      </h3>
-                    </div>
-                    <div className="bg-white px-5 py-4 flex items-center gap-3">
-                      <span className="text-2xl">{turnoIcon(a.turno)}</span>
-                      <div>
-                        <p className="text-[#333] font-semibold text-sm">
-                          {turnoLabel(a.turno)}
-                        </p>
-                        <p className="text-[#6B7B3A] text-sm font-medium">
-                          {a.finca}
-                        </p>
+                    <div
+                      className={`px-5 py-3 ${
+                        a.estado === "aceptado"
+                          ? "bg-green-600"
+                          : a.estado === "rechazado"
+                          ? "bg-red-400"
+                          : "bg-[#6B7B3A]"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-bold tracking-wide text-white">
+                          {diaLabel(a.dia)}
+                        </h3>
+                        {a.estado !== "pendiente" && (
+                          <span className="text-xs text-white/80 font-medium uppercase">
+                            {a.estado === "aceptado"
+                              ? "Aceptado"
+                              : "Rechazado"}
+                          </span>
+                        )}
                       </div>
+                    </div>
+
+                    <div className="bg-white px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{turnoIcon(a.turno)}</span>
+                        <div>
+                          <p className="text-[#333] font-semibold text-sm">
+                            {turnoLabel(a.turno)}
+                          </p>
+                          <p className="text-[#6B7B3A] text-sm font-medium">
+                            {a.finca}
+                          </p>
+                        </div>
+                      </div>
+
+                      {a.estado === "pendiente" && (
+                        <div className="flex gap-2 mt-3">
+                          <button
+                            onClick={() =>
+                              responder(a.asignacion_id, "aceptado")
+                            }
+                            className="flex-1 py-2 bg-green-600 text-white rounded-xl text-sm font-medium
+                              hover:bg-green-700 active:scale-[0.98] transition-all"
+                          >
+                            Aceptar
+                          </button>
+                          <button
+                            onClick={() =>
+                              responder(a.asignacion_id, "rechazado")
+                            }
+                            className="flex-1 py-2 bg-red-400 text-white rounded-xl text-sm font-medium
+                              hover:bg-red-500 active:scale-[0.98] transition-all"
+                          >
+                            Rechazar
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

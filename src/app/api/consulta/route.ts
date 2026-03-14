@@ -41,9 +41,9 @@ export async function GET(request: NextRequest) {
 
     const cicloId = ciclos[0].id;
 
-    // Buscar disponibilidad del camarero en el ciclo activo
+    // Buscar todas las disponibilidades del camarero en el ciclo activo
     const [disponibilidades] = await pool.query<mysql.RowDataPacket[]>(
-      "SELECT id FROM disponibilidades WHERE LOWER(nombre_o_telefono) = LOWER(?) AND ciclo_id = ? LIMIT 1",
+      "SELECT id FROM disponibilidades WHERE LOWER(nombre_o_telefono) = LOWER(?) AND ciclo_id = ?",
       [nombre.trim(), cicloId]
     );
 
@@ -52,21 +52,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ encontrado: false });
     }
 
-    // Buscar asignaciones
+    // Buscar asignaciones en todas las disponibilidades del camarero
+    const ids = disponibilidades.map((d) => d.id);
     const [asignaciones] = await pool.query<mysql.RowDataPacket[]>(
-      `SELECT e.dia, e.turno, e.finca
+      `SELECT a.id AS asignacion_id, e.dia, e.turno, e.finca, a.estado
        FROM asignaciones a
        JOIN eventos e ON a.evento_id = e.id
-       WHERE a.disponibilidad_id = ?
+       WHERE a.disponibilidad_id IN (?)
        ORDER BY FIELD(e.dia, 'viernes', 'sabado'), FIELD(e.turno, 'comida', 'cena')`,
-      [disponibilidades[0].id]
+      [ids]
     );
+
+    const pendientes = asignaciones.filter((a) => a.estado === "pendiente").length;
 
     consultasPorIP.set(ip, consultas + 1);
 
     return NextResponse.json({
       encontrado: true,
       asignaciones,
+      pendientes,
     });
   } catch (error) {
     console.error("Error al consultar asignaciones:", error);

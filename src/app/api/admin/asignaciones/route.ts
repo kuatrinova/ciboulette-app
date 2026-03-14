@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     // Camareros asignados a este evento
     const [asignados] = await pool.query<mysql.RowDataPacket[]>(
-      `SELECT d.id, d.nombre_o_telefono
+      `SELECT d.id, d.nombre_o_telefono, a.estado
        FROM asignaciones a
        JOIN disponibilidades d ON a.disponibilidad_id = d.id
        WHERE a.evento_id = ?

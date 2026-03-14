@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS asignaciones (
   id INT AUTO_INCREMENT PRIMARY KEY,
   evento_id INT NOT NULL,
   disponibilidad_id INT NOT NULL,
+  estado ENUM('pendiente', 'aceptado', 'rechazado') NOT NULL DEFAULT 'pendiente',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (evento_id) REFERENCES eventos(id) ON DELETE CASCADE,
   FOREIGN KEY (disponibilidad_id) REFERENCES disponibilidades(id) ON DELETE CASCADE,

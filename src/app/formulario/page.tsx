@@ -141,7 +141,13 @@ export default function Formulario() {
       }
 
       localStorage.setItem("ciboulette_nombre", nombre.trim());
-      router.push("/confirmacion");
+      const params = new URLSearchParams();
+      params.set("nombre", nombre.trim());
+      if (seleccion.viernes_comida) params.set("vc", "1");
+      if (seleccion.viernes_cena) params.set("vn", "1");
+      if (seleccion.sabado_comida) params.set("sc", "1");
+      if (seleccion.sabado_cena) params.set("sn", "1");
+      router.push(`/confirmacion?${params.toString()}`);
     } catch {
       setError("Error de conexión. Intenta de nuevo.");
       setLoading(false);
