@@ -3,7 +3,7 @@ import Footer from "@/components/Footer";
 
 export default function Cerrado() {
   return (
-    <>
+    <div className="min-h-screen flex flex-col max-w-md mx-auto px-6">
       <div className="flex-1 flex flex-col items-center justify-center">
         <div className="animate-fade-in-up">
           <Header />
@@ -39,6 +39,6 @@ export default function Cerrado() {
       <div className="animate-fade-in-up animate-delay-200">
         <Footer />
       </div>
-    </>
+    </div>
   );
 }

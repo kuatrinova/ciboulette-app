@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
-import { generarExcel } from "@/lib/excel";
+import { generarExcelAsignacion } from "@/lib/excel-asignacion";
 import mysql from "mysql2/promise";
 
 function verificarAdmin(request: NextRequest): boolean {
@@ -37,8 +37,9 @@ export async function GET(request: NextRequest) {
       }
       ciclo = ciclos[0];
     }
-    const nombreArchivo = `Disponibilidad_Semana_${ciclo.semana}_${ciclo.ano}.xlsx`;
-    const buffer = await generarExcel(ciclo.id, ciclo.semana, ciclo.ano);
+
+    const nombreArchivo = `Asignacion_Semana_${ciclo.semana}_${ciclo.ano}.xlsx`;
+    const buffer = await generarExcelAsignacion(ciclo.id, ciclo.semana, ciclo.ano);
 
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error al generar Excel:", error);
+    console.error("Error al generar Excel de asignación:", error);
     return NextResponse.json(
       { error: "Error al generar Excel" },
       { status: 500 }

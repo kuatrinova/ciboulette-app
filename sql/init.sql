@@ -35,6 +35,28 @@ INSERT INTO config (clave, valor) VALUES
   ('email_receptor', 'destino@email.com')
 ON DUPLICATE KEY UPDATE valor = valor;
 
+-- Tablas de asignacion de eventos
+CREATE TABLE IF NOT EXISTS eventos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  ciclo_id INT NOT NULL,
+  dia ENUM('viernes', 'sabado') NOT NULL,
+  turno ENUM('comida', 'cena') NOT NULL,
+  finca VARCHAR(255) NOT NULL,
+  num_camareros INT NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (ciclo_id) REFERENCES ciclos(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS asignaciones (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  evento_id INT NOT NULL,
+  disponibilidad_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (evento_id) REFERENCES eventos(id) ON DELETE CASCADE,
+  FOREIGN KEY (disponibilidad_id) REFERENCES disponibilidades(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_asignacion (evento_id, disponibilidad_id)
+);
+
 -- Crear primer ciclo abierto
 INSERT INTO ciclos (semana, ano, fecha_inicio, estado)
 VALUES (WEEK(NOW(), 1), YEAR(NOW()), NOW(), 'abierto');

@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     // Rate limiting
     const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
     const envios = enviosPorIP.get(ip) || 0;
-    if (envios >= 3) {
+    if (envios >= 50) {
       return NextResponse.json(
         { error: "Demasiados envíos. Intenta en unos minutos." },
         { status: 429 }

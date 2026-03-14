@@ -2,7 +2,7 @@ import Footer from "@/components/Footer";
 
 export default function Confirmacion() {
   return (
-    <>
+    <div className="min-h-screen flex flex-col max-w-md mx-auto px-6">
       <div className="flex-1 flex flex-col items-center justify-center">
         {/* Check icon */}
         <div className="animate-fade-in-up">
@@ -32,7 +32,7 @@ export default function Confirmacion() {
           </p>
         </div>
 
-        <div className="animate-fade-in-up animate-delay-200 mt-10 w-full">
+        <div className="animate-fade-in-up animate-delay-200 mt-10 w-full flex flex-col gap-3">
           <a
             href="/"
             className="block w-full py-4 bg-[#6B7B3A] text-white text-center rounded-2xl text-base font-medium
@@ -41,12 +41,20 @@ export default function Confirmacion() {
           >
             Cerrar
           </a>
+          <a
+            href="/consulta"
+            className="block w-full py-3 text-[#6B7B3A] text-center rounded-2xl text-sm font-medium
+              border border-[#6B7B3A]/30 hover:bg-[#E8EBD8]
+              active:scale-[0.98] transition-all duration-200"
+          >
+            Consultar mis asignaciones
+          </a>
         </div>
       </div>
 
       <div className="animate-fade-in-up animate-delay-300">
         <Footer />
       </div>
-    </>
+    </div>
   );
 }

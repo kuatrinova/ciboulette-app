@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -96,6 +96,11 @@ export default function Formulario() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const saved = localStorage.getItem("ciboulette_nombre");
+    if (saved) setNombre(saved);
+  }, []);
+
   const toggle = (key: keyof typeof seleccion) => {
     setSeleccion({ ...seleccion, [key]: !seleccion[key] });
   };
@@ -135,6 +140,7 @@ export default function Formulario() {
         return;
       }
 
+      localStorage.setItem("ciboulette_nombre", nombre.trim());
       router.push("/confirmacion");
     } catch {
       setError("Error de conexión. Intenta de nuevo.");
@@ -143,7 +149,7 @@ export default function Formulario() {
   };
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col max-w-md mx-auto px-6">
       <div className="flex-1 flex flex-col">
         <div className="animate-fade-in-up">
           <Header />
@@ -214,6 +220,6 @@ export default function Formulario() {
       </div>
 
       <Footer />
-    </>
+    </div>
   );
 }

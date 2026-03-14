@@ -1,14 +1,12 @@
-import Image from "next/image";
-
+/* eslint-disable @next/next/no-img-element */
 export default function Header() {
   return (
     <header className="flex flex-col items-center pt-10 pb-4">
-      <Image
-        src="/images/logo-ciboulette.jpg"
+      <img
+        src="/images/logo-ciboulette.png"
         alt="Ciboulette Catering"
-        width={220}
-        height={80}
-        priority
+        width={400}
+        height={130}
         className="object-contain"
       />
     </header>

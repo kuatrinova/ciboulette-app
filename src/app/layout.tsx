@@ -38,9 +38,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} antialiased bg-[#FAFAF8]`}>
         <SWRegister />
-        <div className="min-h-screen flex flex-col max-w-md mx-auto px-6">
-          {children}
-        </div>
+        {children}
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 
 interface Envio {
   id: number;
@@ -21,12 +22,17 @@ interface Ciclo {
   fecha_cierre: string | null;
 }
 
+interface CicloHistorial extends Ciclo {
+  total_envios: number;
+}
+
 export default function Admin() {
   const [password, setPassword] = useState("");
   const [autenticado, setAutenticado] = useState(false);
   const [envios, setEnvios] = useState<Envio[]>([]);
   const [ciclo, setCiclo] = useState<Ciclo | null>(null);
   const [emailReceptor, setEmailReceptor] = useState("");
+  const [historial, setHistorial] = useState<CicloHistorial[]>([]);
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState("");
 
@@ -35,11 +41,21 @@ export default function Admin() {
     Authorization: `Bearer ${password}`,
   };
 
+  // Recuperar sesión guardada
+  useEffect(() => {
+    const saved = sessionStorage.getItem("ciboulette_admin_pwd");
+    if (saved) {
+      setPassword(saved);
+      setAutenticado(true);
+    }
+  }, []);
+
   const cargarDatos = useCallback(async () => {
     try {
-      const [enviosRes, configRes] = await Promise.all([
+      const [enviosRes, configRes, historialRes] = await Promise.all([
         fetch("/api/admin/envios", { headers }),
         fetch("/api/admin/config", { headers }),
+        fetch("/api/admin/historial", { headers }),
       ]);
 
       if (enviosRes.status === 401) {
@@ -49,10 +65,12 @@ export default function Admin() {
 
       const enviosData = await enviosRes.json();
       const configData = await configRes.json();
+      const historialData = await historialRes.json();
 
       setEnvios(enviosData.envios || []);
       setCiclo(enviosData.ciclo || null);
       setEmailReceptor(configData.config?.email_receptor || "");
+      setHistorial(historialData.historial || []);
     } catch {
       setMensaje("Error al cargar datos");
     }
@@ -68,6 +86,7 @@ export default function Admin() {
     e.preventDefault();
     const res = await fetch("/api/admin/envios", { headers });
     if (res.ok) {
+      sessionStorage.setItem("ciboulette_admin_pwd", password);
       setAutenticado(true);
     } else {
       setMensaje("Contraseña incorrecta");
@@ -162,69 +181,82 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF8] px-4 py-6 max-w-4xl mx-auto">
-      <h1 className="text-xl font-semibold text-[#333] mb-6">
+    <div className="min-h-screen bg-[#FAFAF8] px-4 py-6 max-w-4xl lg:max-w-none lg:px-12 xl:px-20 mx-auto md:px-8 md:py-8">
+      <h1 className="text-xl md:text-2xl font-semibold text-[#333] mb-6">
         Panel Admin - Ciboulette
       </h1>
 
       {mensaje && (
-        <div className="mb-4 px-4 py-2 bg-[#E8EBD8] text-[#6B7B3A] rounded-xl text-sm">
+        <div className="mb-4 px-4 py-2 bg-[#E8EBD8] text-[#6B7B3A] rounded-xl text-sm md:text-base">
           {mensaje}
         </div>
       )}
 
-      {/* Estado del ciclo */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm mb-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-[#777]">Ciclo actual</p>
-            <p className="font-medium text-[#333]">
-              Semana {ciclo?.semana} / {ciclo?.ano}
-            </p>
-            <span
-              className={`inline-block mt-1 px-3 py-0.5 rounded-full text-xs font-medium ${
-                ciclo?.estado === "abierto"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
-              }`}
+      {/* Ciclo + Acciones: grid en desktop */}
+      <div className="md:grid md:grid-cols-2 md:gap-4 mb-4 space-y-4 md:space-y-0">
+        {/* Estado del ciclo */}
+        <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-[#777]">Ciclo actual</p>
+              <p className="font-medium text-[#333] md:text-lg">
+                Semana {ciclo?.semana} / {ciclo?.ano}
+              </p>
+              <span
+                className={`inline-block mt-1 px-3 py-0.5 rounded-full text-xs font-medium ${
+                  ciclo?.estado === "abierto"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {ciclo?.estado === "abierto" ? "Abierto" : "Cerrado"}
+              </span>
+            </div>
+            <button
+              onClick={toggleCiclo}
+              disabled={loading}
+              className="px-4 py-2 md:px-5 md:py-2.5 bg-[#6B7B3A] text-white rounded-xl text-sm font-medium
+                hover:bg-[#5A6A2F] disabled:opacity-50 transition-colors"
             >
-              {ciclo?.estado === "abierto" ? "Abierto" : "Cerrado"}
-            </span>
+              {ciclo?.estado === "abierto" ? "Cerrar ciclo" : "Abrir nuevo ciclo"}
+            </button>
           </div>
-          <button
-            onClick={toggleCiclo}
-            disabled={loading}
-            className="px-4 py-2 bg-[#6B7B3A] text-white rounded-xl text-sm font-medium
-              hover:bg-[#5A6A2F] disabled:opacity-50"
-          >
-            {ciclo?.estado === "abierto" ? "Cerrar ciclo" : "Abrir nuevo ciclo"}
-          </button>
+        </div>
+
+        {/* Acciones */}
+        <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm flex flex-col gap-3">
+          <p className="text-sm text-[#777]">Acciones</p>
+          <div className="flex gap-3 flex-wrap">
+            <button
+              onClick={descargarExcel}
+              className="px-4 py-2 bg-[#6B7B3A] text-white rounded-xl text-sm font-medium
+                hover:bg-[#5A6A2F] transition-colors"
+            >
+              Descargar Excel
+            </button>
+            <Link
+              href="/admin/asignacion"
+              className="px-4 py-2 bg-[#6B7B3A] text-white rounded-xl text-sm font-medium
+                hover:bg-[#5A6A2F] inline-flex items-center transition-colors"
+            >
+              Asignar Eventos
+            </Link>
+            <button
+              onClick={ejecutarCron}
+              disabled={loading}
+              className="px-4 py-2 border border-[#6B7B3A] text-[#6B7B3A] rounded-xl text-sm font-medium
+                hover:bg-[#E8EBD8] disabled:opacity-50 transition-colors"
+            >
+              Ejecutar cierre semanal
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Acciones */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm mb-4 flex gap-3 flex-wrap">
-        <button
-          onClick={descargarExcel}
-          className="px-4 py-2 bg-[#6B7B3A] text-white rounded-xl text-sm font-medium
-            hover:bg-[#5A6A2F]"
-        >
-          Descargar Excel
-        </button>
-        <button
-          onClick={ejecutarCron}
-          disabled={loading}
-          className="px-4 py-2 border border-[#6B7B3A] text-[#6B7B3A] rounded-xl text-sm font-medium
-            hover:bg-[#E8EBD8] disabled:opacity-50"
-        >
-          Ejecutar cierre semanal
-        </button>
-      </div>
-
       {/* Config email */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm mb-4">
+      <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm mb-4">
         <p className="text-sm text-[#777] mb-2">Email receptor del Excel</p>
-        <div className="flex gap-2">
+        <div className="flex gap-2 md:max-w-lg">
           <input
             type="email"
             value={emailReceptor}
@@ -234,7 +266,8 @@ export default function Admin() {
           />
           <button
             onClick={guardarEmail}
-            className="px-4 py-2 bg-[#6B7B3A] text-white rounded-xl text-sm font-medium"
+            className="px-4 py-2 bg-[#6B7B3A] text-white rounded-xl text-sm font-medium transition-colors
+              hover:bg-[#5A6A2F]"
           >
             Guardar
           </button>
@@ -242,8 +275,8 @@ export default function Admin() {
       </div>
 
       {/* Tabla de envíos */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm">
-        <p className="text-sm text-[#777] mb-3">
+      <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm">
+        <p className="text-sm md:text-base text-[#777] mb-3">
           Envíos del ciclo ({envios.length} registros)
         </p>
         {envios.length === 0 ? (
@@ -252,48 +285,52 @@ export default function Admin() {
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm md:text-base">
               <thead>
                 <tr className="border-b border-[#eee]">
-                  <th className="text-left py-2 px-2 text-[#777] font-medium">
+                  <th className="text-left py-2 md:py-3 px-2 md:px-3 text-[#777] font-medium">
                     Nombre / Tel.
                   </th>
-                  <th className="text-center py-2 px-1 text-[#777] font-medium text-xs">
-                    Vie Com
+                  <th className="text-center py-2 md:py-3 px-1 md:px-2 text-[#777] font-medium text-xs md:text-sm">
+                    <span className="md:hidden">Vie Com</span>
+                    <span className="hidden md:inline">Viernes Comida</span>
                   </th>
-                  <th className="text-center py-2 px-1 text-[#777] font-medium text-xs">
-                    Vie Cen
+                  <th className="text-center py-2 md:py-3 px-1 md:px-2 text-[#777] font-medium text-xs md:text-sm">
+                    <span className="md:hidden">Vie Cen</span>
+                    <span className="hidden md:inline">Viernes Cena</span>
                   </th>
-                  <th className="text-center py-2 px-1 text-[#777] font-medium text-xs">
-                    Sáb Com
+                  <th className="text-center py-2 md:py-3 px-1 md:px-2 text-[#777] font-medium text-xs md:text-sm">
+                    <span className="md:hidden">Sáb Com</span>
+                    <span className="hidden md:inline">Sábado Comida</span>
                   </th>
-                  <th className="text-center py-2 px-1 text-[#777] font-medium text-xs">
-                    Sáb Cen
+                  <th className="text-center py-2 md:py-3 px-1 md:px-2 text-[#777] font-medium text-xs md:text-sm">
+                    <span className="md:hidden">Sáb Cen</span>
+                    <span className="hidden md:inline">Sábado Cena</span>
                   </th>
-                  <th className="text-left py-2 px-2 text-[#777] font-medium">
+                  <th className="text-left py-2 md:py-3 px-2 md:px-3 text-[#777] font-medium">
                     Fecha
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {envios.map((e) => (
-                  <tr key={e.id} className="border-b border-[#f5f5f5]">
-                    <td className="py-2 px-2 text-[#333]">
+                  <tr key={e.id} className="border-b border-[#f5f5f5] hover:bg-[#fafaf8] transition-colors">
+                    <td className="py-2 md:py-3 px-2 md:px-3 text-[#333]">
                       {e.nombre_o_telefono}
                     </td>
-                    <td className="text-center py-2 px-1">
+                    <td className="text-center py-2 md:py-3 px-1 md:px-2">
                       {e.viernes_comida ? "✓" : "—"}
                     </td>
-                    <td className="text-center py-2 px-1">
+                    <td className="text-center py-2 md:py-3 px-1 md:px-2">
                       {e.viernes_cena ? "✓" : "—"}
                     </td>
-                    <td className="text-center py-2 px-1">
+                    <td className="text-center py-2 md:py-3 px-1 md:px-2">
                       {e.sabado_comida ? "✓" : "—"}
                     </td>
-                    <td className="text-center py-2 px-1">
+                    <td className="text-center py-2 md:py-3 px-1 md:px-2">
                       {e.sabado_cena ? "✓" : "—"}
                     </td>
-                    <td className="py-2 px-2 text-[#999] text-xs">
+                    <td className="py-2 md:py-3 px-2 md:px-3 text-[#999] text-xs md:text-sm">
                       {new Date(e.created_at).toLocaleString("es-ES", {
                         day: "2-digit",
                         month: "2-digit",
@@ -308,6 +345,89 @@ export default function Admin() {
           </div>
         )}
       </div>
+
+      {/* Historial de ciclos cerrados */}
+      {historial.length > 0 && (
+        <div className="bg-white rounded-2xl p-5 md:p-6 shadow-sm mt-4">
+          <p className="text-sm md:text-base text-[#777] mb-3">
+            Historial de ciclos cerrados
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm md:text-base">
+              <thead>
+                <tr className="border-b border-[#eee]">
+                  <th className="text-left py-2 md:py-3 px-2 md:px-3 text-[#777] font-medium">Semana</th>
+                  <th className="text-left py-2 md:py-3 px-2 md:px-3 text-[#777] font-medium">Fecha cierre</th>
+                  <th className="text-center py-2 md:py-3 px-2 md:px-3 text-[#777] font-medium">Registros</th>
+                  <th className="text-center py-2 md:py-3 px-2 md:px-3 text-[#777] font-medium">Excel</th>
+                  <th className="text-center py-2 md:py-3 px-2 md:px-3 text-[#777] font-medium"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {historial.map((h) => (
+                  <tr key={h.id} className="border-b border-[#f5f5f5] hover:bg-[#fafaf8] transition-colors">
+                    <td className="py-2 md:py-3 px-2 md:px-3 text-[#333]">
+                      S{h.semana} / {h.ano}
+                    </td>
+                    <td className="py-2 md:py-3 px-2 md:px-3 text-[#999] text-xs md:text-sm">
+                      {h.fecha_cierre
+                        ? new Date(h.fecha_cierre).toLocaleString("es-ES", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "—"}
+                    </td>
+                    <td className="text-center py-2 md:py-3 px-2 md:px-3 text-[#333] font-medium">
+                      {h.total_envios}
+                    </td>
+                    <td className="text-center py-2 md:py-3 px-2 md:px-3">
+                      <button
+                        onClick={async () => {
+                          const res = await fetch(`/api/admin/excel?ciclo_id=${h.id}`, { headers });
+                          if (res.ok) {
+                            const blob = await res.blob();
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `Disponibilidad_Semana_${h.semana}_${h.ano}.xlsx`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          }
+                        }}
+                        className="text-[#6B7B3A] hover:underline text-xs md:text-sm font-medium"
+                      >
+                        Descargar
+                      </button>
+                    </td>
+                    <td className="text-center py-2 md:py-3 px-2 md:px-3">
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`¿Eliminar ciclo S${h.semana}/${h.ano}?`)) return;
+                          const res = await fetch("/api/admin/historial", {
+                            method: "DELETE",
+                            headers,
+                            body: JSON.stringify({ ciclo_id: h.id }),
+                          });
+                          if (res.ok) {
+                            setMensaje("Ciclo eliminado");
+                            await cargarDatos();
+                          }
+                        }}
+                        className="text-red-500 hover:underline text-xs md:text-sm font-medium"
+                      >
+                        Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
