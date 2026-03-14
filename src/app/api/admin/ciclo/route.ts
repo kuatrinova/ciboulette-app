@@ -59,7 +59,20 @@ export async function POST(request: NextRequest) {
         console.error("Error al enviar email:", emailError);
       }
 
-      return NextResponse.json({ success: true, message: "Ciclo cerrado" });
+      // Crear nuevo ciclo automáticamente
+      const ahoraCerrar = new Date();
+      const dCerrar = new Date(Date.UTC(ahoraCerrar.getFullYear(), ahoraCerrar.getMonth(), ahoraCerrar.getDate()));
+      const dayNumCerrar = dCerrar.getUTCDay() || 7;
+      dCerrar.setUTCDate(dCerrar.getUTCDate() + 4 - dayNumCerrar);
+      const yearStartCerrar = new Date(Date.UTC(dCerrar.getUTCFullYear(), 0, 1));
+      const semanaCerrar = Math.ceil(((dCerrar.getTime() - yearStartCerrar.getTime()) / 86400000 + 1) / 7);
+
+      await pool.query(
+        "INSERT INTO ciclos (semana, ano, fecha_inicio, estado) VALUES (?, ?, NOW(), 'abierto')",
+        [semanaCerrar, ahoraCerrar.getFullYear()]
+      );
+
+      return NextResponse.json({ success: true, message: "Ciclo cerrado. Nuevo ciclo abierto." });
     }
 
     if (accion === "abrir") {
